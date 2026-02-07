@@ -16,6 +16,7 @@
     rulePattern: document.getElementById("rulePattern"),
     ruleProfile: document.getElementById("ruleProfile"),
     addRule: document.getElementById("addRule"),
+    cancelRuleEdit: document.getElementById("cancelRuleEdit"),
     ruleHint: document.getElementById("ruleHint"),
     ruleList: document.getElementById("ruleList"),
     ruleCount: document.getElementById("ruleCount"),
@@ -43,6 +44,7 @@
 
   let currentTab = null;
   let editingProfileId = null;
+  let editingRuleId = null;
   const COLLAPSE_KEY = "popupCollapsedState";
   const collapseStore = api.storage && api.storage.session ? api.storage.session : api.storage.local;
 
@@ -104,8 +106,28 @@
       meta.textContent = profiles[rule.profileId]
         ? profiles[rule.profileId].name
         : "Missing profile";
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const edit = document.createElement("button");
+      edit.className = "btn ghost";
+      edit.textContent = "Edit";
+      edit.dataset.action = "edit";
+      edit.dataset.id = rule.id;
+
+      const remove = document.createElement("button");
+      remove.className = "btn ghost";
+      remove.textContent = "Delete";
+      remove.dataset.action = "delete";
+      remove.dataset.id = rule.id;
+
+      actions.appendChild(edit);
+      actions.appendChild(remove);
+
       item.appendChild(label);
       item.appendChild(meta);
+      item.appendChild(actions);
       elements.ruleList.appendChild(item);
     });
   };
@@ -172,6 +194,13 @@
     elements.saveProfile.textContent = "Save profile";
     elements.profileHint.textContent = "";
     updateProfileFields();
+  };
+
+  const resetRuleForm = () => {
+    elements.rulePattern.value = "";
+    elements.ruleProfile.value = "direct";
+    elements.addRule.textContent = "Add rule";
+    editingRuleId = null;
   };
 
   const updateProfileFields = () => {
@@ -285,6 +314,12 @@
       elements.ruleHint.textContent = "Tip: Prefix with re: for regex.";
       elements.ruleHint.style.color = "";
     }, 2400);
+  };
+
+  const populateRuleForm = (rule) => {
+    elements.rulePattern.value = rule.pattern || "";
+    elements.ruleProfile.value = rule.profileId || "direct";
+    elements.addRule.textContent = "Update rule";
   };
 
   const setPopupImportHint = (message, isError) => {
@@ -529,15 +564,27 @@
 
   elements.addRule.addEventListener("click", async () => {
     try {
-      await ProxyCatStorage.addRule({
-        pattern: elements.rulePattern.value,
-        profileId: elements.ruleProfile.value,
-        enabled: true
-      });
+      if (editingRuleId) {
+        await ProxyCatStorage.updateRule(editingRuleId, {
+          pattern: elements.rulePattern.value,
+          profileId: elements.ruleProfile.value
+        });
+      } else {
+        await ProxyCatStorage.addRule({
+          pattern: elements.rulePattern.value,
+          profileId: elements.ruleProfile.value,
+          enabled: true
+        });
+      }
+      resetRuleForm();
       await refresh();
     } catch (error) {
       showRuleError(error.message || "Could not add rule.");
     }
+  });
+
+  elements.cancelRuleEdit.addEventListener("click", () => {
+    resetRuleForm();
   });
 
   elements.profileScheme.addEventListener("change", updateProfileFields);
@@ -599,6 +646,34 @@
       elements.saveProfile.textContent = "Update profile";
       elements.profileHint.textContent = "";
       updateProfileFields();
+    }
+  });
+
+  elements.ruleList.addEventListener("click", async (event) => {
+    const action = event.target.dataset.action;
+    const id = event.target.dataset.id;
+    if (!action || !id) {
+      return;
+    }
+
+    const state = await ProxyCatStorage.getState();
+    const rule = state.rules.find((item) => item.id === id);
+    if (!rule) {
+      return;
+    }
+
+    if (action === "delete") {
+      await ProxyCatStorage.deleteRule(id);
+      if (editingRuleId === id) {
+        resetRuleForm();
+      }
+      await refresh();
+      return;
+    }
+
+    if (action === "edit") {
+      editingRuleId = id;
+      populateRuleForm(rule);
     }
   });
 

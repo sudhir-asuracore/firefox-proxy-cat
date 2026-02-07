@@ -21,6 +21,8 @@
     rulePattern: document.getElementById("rulePatternInput"),
     ruleProfile: document.getElementById("ruleProfileSelect"),
     ruleEnabled: document.getElementById("ruleEnabled"),
+    saveRule: document.getElementById("saveRule"),
+    cancelRuleEdit: document.getElementById("cancelRuleEdit"),
     ruleHint: document.getElementById("ruleHint"),
     exportData: document.getElementById("exportData"),
     importData: document.getElementById("importData"),
@@ -30,6 +32,7 @@
   };
 
   let editProfileId = null;
+  let editRuleId = null;
 
   const clearHints = () => {
     elements.profileHint.textContent = "";
@@ -155,6 +158,12 @@
       const actions = document.createElement("div");
       actions.className = "actions";
 
+      const edit = document.createElement("button");
+      edit.className = "btn ghost";
+      edit.textContent = "Edit";
+      edit.dataset.action = "edit";
+      edit.dataset.id = rule.id;
+
       const toggle = document.createElement("button");
       toggle.className = "btn ghost";
       toggle.textContent = rule.enabled ? "Disable" : "Enable";
@@ -167,6 +176,7 @@
       remove.dataset.action = "delete";
       remove.dataset.id = rule.id;
 
+      actions.appendChild(edit);
       actions.appendChild(toggle);
       actions.appendChild(remove);
 
@@ -184,6 +194,12 @@
     updateProfileFields();
   };
 
+  const resetRuleForm = () => {
+    elements.ruleForm.reset();
+    editRuleId = null;
+    elements.saveRule.textContent = "Add rule";
+  };
+
   const populateProfileForm = (profile) => {
     elements.profileName.value = profile.name;
     elements.profileScheme.value = profile.scheme || "http";
@@ -193,6 +209,13 @@
     elements.profilePassword.value = profile.password || "";
     elements.saveProfile.textContent = "Update profile";
     updateProfileFields();
+  };
+
+  const populateRuleForm = (rule) => {
+    elements.rulePattern.value = rule.pattern || "";
+    elements.ruleProfile.value = rule.profileId || "direct";
+    elements.ruleEnabled.checked = rule.enabled !== false;
+    elements.saveRule.textContent = "Update rule";
   };
 
   const refresh = async () => {
@@ -433,6 +456,10 @@
     resetProfileForm();
   });
 
+  elements.cancelRuleEdit.addEventListener("click", () => {
+    resetRuleForm();
+  });
+
   elements.profileList.addEventListener("click", async (event) => {
     const action = event.target.dataset.action;
     const id = event.target.dataset.id;
@@ -464,15 +491,20 @@
     clearHints();
 
     try {
-      await ProxyCatStorage.addRule({
+      const payload = {
         pattern: elements.rulePattern.value,
         profileId: elements.ruleProfile.value,
         enabled: elements.ruleEnabled.checked
-      });
-      elements.ruleForm.reset();
+      };
+      if (editRuleId) {
+        await ProxyCatStorage.updateRule(editRuleId, payload);
+      } else {
+        await ProxyCatStorage.addRule(payload);
+      }
+      resetRuleForm();
       await refresh();
     } catch (error) {
-      setRuleHint(error.message || "Could not add rule.");
+      setRuleHint(error.message || "Could not save rule.");
     }
   });
 
@@ -496,8 +528,17 @@
       return;
     }
 
+    if (action === "edit") {
+      editRuleId = id;
+      populateRuleForm(rule);
+      return;
+    }
+
     if (action === "delete") {
       await ProxyCatStorage.deleteRule(id);
+      if (editRuleId === id) {
+        resetRuleForm();
+      }
       await refresh();
     }
   });

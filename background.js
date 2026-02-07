@@ -57,6 +57,79 @@
     return state.profiles[profileId];
   };
 
+  const ICON_PATH = "icons/icon.png";
+  const ICON_SIZE = 128;
+  const ENABLED_BG = "#1db954";
+  let enabledIconPromise = null;
+
+  const getEnabledIconData = async () => {
+    if (enabledIconPromise) {
+      return enabledIconPromise;
+    }
+
+    enabledIconPromise = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = ICON_SIZE;
+        canvas.height = ICON_SIZE;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = ENABLED_BG;
+        ctx.fillRect(0, 0, ICON_SIZE, ICON_SIZE);
+        ctx.drawImage(img, 0, 0, ICON_SIZE, ICON_SIZE);
+        resolve(ctx.getImageData(0, 0, ICON_SIZE, ICON_SIZE));
+      };
+      img.onerror = reject;
+      img.src = api.runtime.getURL(ICON_PATH);
+    });
+
+    return enabledIconPromise;
+  };
+
+  const setIconForTab = async (tabId, enabled) => {
+    try {
+      if (!enabled) {
+        await api.browserAction.setIcon({ tabId, path: ICON_PATH });
+        await api.browserAction.setTitle({ tabId, title: "Proxy Cat" });
+        return;
+      }
+
+      const imageData = await getEnabledIconData();
+      await api.browserAction.setIcon({
+        tabId,
+        imageData: { [ICON_SIZE]: imageData }
+      });
+      await api.browserAction.setTitle({ tabId, title: "Proxy Cat: On" });
+    } catch (error) {
+      // Ignore icon update failures.
+    }
+  };
+
+  const updateIconForTab = async (tab) => {
+    if (!tab || tab.id === undefined || tab.id === null) {
+      return;
+    }
+
+    const state = await getState();
+    const decision = ProxyCatMatcher.evaluateProxy({
+      state,
+      tabId: tab.id,
+      groupId: tab.groupId,
+      url: tab.url
+    });
+
+    await setIconForTab(tab.id, decision.type === "profile");
+  };
+
+  const updateIconForActiveTab = async () => {
+    try {
+      const [tab] = await api.tabs.query({ active: true, currentWindow: true });
+      await updateIconForTab(tab);
+    } catch (error) {
+      // Ignore tab query failures.
+    }
+  };
+
   const handleProxyRequest = async (details) => {
     const state = await getState();
     const tabId = details.tabId;
@@ -95,12 +168,14 @@
     if (areaName === "local") {
       await loadState();
       await rebuildMenus();
+      await updateIconForActiveTab();
     }
   });
 
   api.runtime.onInstalled.addListener(async () => {
     await loadState();
     await rebuildMenus();
+    await updateIconForActiveTab();
   });
 
   api.runtime.onStartup.addListener(async () => {
@@ -111,6 +186,21 @@
       await api.storage.local.remove("popupCollapsedState");
     } catch (error) {
       // Ignore cleanup failures.
+    }
+  });
+
+  api.tabs.onActivated.addListener(async ({ tabId }) => {
+    try {
+      const tab = await api.tabs.get(tabId);
+      await updateIconForTab(tab);
+    } catch (error) {
+      // Ignore tab lookup failures.
+    }
+  });
+
+  api.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    if (changeInfo.url || changeInfo.status === "complete") {
+      await updateIconForTab(tab);
     }
   });
 
@@ -247,5 +337,5 @@
     }
   });
 
-  loadState().then(rebuildMenus).catch(() => {});
+  loadState().then(rebuildMenus).then(updateIconForActiveTab).catch(() => {});
 })();
