@@ -57,7 +57,7 @@
     return state.profiles[profileId];
   };
 
-  const ICON_PATH = "icons/icon.png";
+  const ICON_PATH = "icons/icon-128.png";
   const ICON_SIZE = 128;
   const ENABLED_BG = "#1db954";
   let enabledIconPromise = null;
