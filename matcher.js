@@ -37,6 +37,27 @@
     }
   };
 
+  const INTERNAL_SCHEMES = new Set([
+    "about:",
+    "moz-extension:",
+    "chrome:",
+    "resource:",
+    "view-source:",
+    "devtools:",
+    "file:",
+    "data:",
+    "blob:",
+    "jar:"
+  ]);
+
+  const shouldBypassProxy = (url) => {
+    const urlObj = normalizeUrl(url);
+    if (!urlObj) {
+      return true;
+    }
+    return INTERNAL_SCHEMES.has(urlObj.protocol);
+  };
+
   const matchPattern = (pattern, urlObj) => {
     if (!urlObj) {
       return false;
@@ -98,6 +119,10 @@
       return { type: "direct" };
     }
 
+    if (shouldBypassProxy(url)) {
+      return { type: "direct" };
+    }
+
     const tabOverride = state.tabOverrides[String(tabId)];
     const resolvedTab = resolveOverride(tabOverride);
     if (resolvedTab) {
@@ -116,6 +141,7 @@
     compilePattern,
     matchPattern,
     findMatchingRule,
-    evaluateProxy
+    evaluateProxy,
+    shouldBypassProxy
   };
 })();
