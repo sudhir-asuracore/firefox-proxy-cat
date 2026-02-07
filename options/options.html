@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Proxy Cat Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Proxy Cat</p>
+        <h1>Proxy orchestration, simplified.</h1>
+        <p class="lead">Create profiles, map them to patterns, and override per tab or group.</p>
+      </div>
+      <div class="hero__pill">Storage: local</div>
+    </header>
+
+    <main class="grid">
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <h2>Profiles</h2>
+            <p>Define reusable proxy endpoints.</p>
+          </div>
+          <span class="badge" id="profileCount">0</span>
+        </div>
+        <div class="table" id="profileList"></div>
+        <form class="form" id="profileForm">
+          <div class="field">
+            <label for="profileName">Name</label>
+            <input id="profileName" type="text" placeholder="Office SOCKS" required />
+          </div>
+          <div class="field">
+            <label for="profileScheme">Scheme</label>
+            <select id="profileScheme">
+              <option value="http">HTTP</option>
+              <option value="https">HTTPS</option>
+              <option value="socks">SOCKS5</option>
+              <option value="socks4">SOCKS4</option>
+              <option value="socks5">SOCKS5 (alt)</option>
+              <option value="direct">Direct</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="profileHost">Host</label>
+            <input id="profileHost" type="text" placeholder="proxy.company.net" />
+          </div>
+          <div class="field">
+            <label for="profilePort">Port</label>
+            <input id="profilePort" type="number" min="1" max="65535" placeholder="1080" />
+          </div>
+          <div class="field">
+            <label for="profileUsername">Username</label>
+            <input id="profileUsername" type="text" placeholder="optional" />
+          </div>
+          <div class="field">
+            <label for="profilePassword">Password</label>
+            <input id="profilePassword" type="password" placeholder="optional" />
+          </div>
+          <div class="button-row">
+            <button class="btn" type="submit" id="saveProfile">Save profile</button>
+            <button class="btn ghost" type="button" id="cancelEdit">Cancel</button>
+          </div>
+          <p class="hint" id="profileHint"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <h2>Rules</h2>
+            <p>Match URLs or hostnames to profiles.</p>
+          </div>
+          <span class="badge" id="ruleCount">0</span>
+        </div>
+        <div class="table" id="ruleList"></div>
+        <form class="form" id="ruleForm">
+          <div class="field">
+            <label for="rulePatternInput">Pattern</label>
+            <input id="rulePatternInput" type="text" placeholder="*.news/* or re:^https://" required />
+          </div>
+          <div class="field">
+            <label for="ruleProfileSelect">Profile</label>
+            <select id="ruleProfileSelect"></select>
+          </div>
+          <div class="field">
+            <label class="switch">
+              <input type="checkbox" id="ruleEnabled" checked />
+              <span>Enabled</span>
+            </label>
+          </div>
+          <div class="button-row">
+            <button class="btn" type="submit">Add rule</button>
+          </div>
+          <p class="hint" id="ruleHint"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <h2>Manage Data</h2>
+            <p>Import or export profiles and rules in bulk.</p>
+          </div>
+        </div>
+        <div class="form">
+          <div class="field">
+            <label for="importMode">Import mode</label>
+            <select id="importMode">
+              <option value="merge">Merge into existing</option>
+              <option value="replace">Replace existing data</option>
+            </select>
+          </div>
+          <div class="button-row">
+            <button class="btn" type="button" id="exportData">Export JSON</button>
+            <button class="btn ghost" type="button" id="importData">Import JSON</button>
+            <input id="importFile" type="file" accept="application/json" hidden />
+          </div>
+          <p class="hint hint--neutral" id="importHint"></p>
+        </div>
+      </section>
+    </main>
+
+    <script src="../storage.js"></script>
+    <script src="../matcher.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

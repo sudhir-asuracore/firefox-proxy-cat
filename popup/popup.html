@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Proxy Cat</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="popup__header">
+        <div>
+          <p class="eyebrow">Proxy Cat</p>
+          <h1>Route with intent</h1>
+        </div>
+        <span class="status" id="activeStatus">Loading...</span>
+      </header>
+
+      <nav class="tabs" aria-label="Popup sections">
+        <button class="tab active" id="tabMainButton" type="button">Dashboard</button>
+        <button class="tab" id="tabOptionsButton" type="button">Options</button>
+      </nav>
+
+      <div class="tab-panel" id="tabMainPanel">
+        <section class="card" id="tabCard" data-collapsible>
+          <div class="card__title" role="button" tabindex="0" aria-expanded="true">
+            <span>Current tab</span>
+            <span class="chip" id="tabDomain">—</span>
+          </div>
+          <p class="card__meta" id="tabUrl">Waiting for tab...</p>
+          <div class="form-row">
+            <label for="tabProfile">Assign profile</label>
+            <select id="tabProfile"></select>
+          </div>
+          <div class="button-row">
+            <button class="btn" id="applyTab">Apply to tab</button>
+            <button class="btn ghost" id="disableTab">Disable</button>
+            <button class="btn ghost" id="clearTab">Clear</button>
+          </div>
+        </section>
+
+        <section class="card collapsed" id="manageRulesCard" data-collapsible>
+          <div class="card__title" role="button" tabindex="0" aria-expanded="false">
+            <span>Manage Rules</span>
+            <span class="chip muted" id="ruleCount">0</span>
+          </div>
+          <div class="form-row">
+            <label for="rulePattern">Pattern</label>
+            <input id="rulePattern" type="text" placeholder="example.com or *://*.news/*" />
+          </div>
+          <div class="form-row">
+            <label for="ruleProfile">Profile</label>
+            <select id="ruleProfile"></select>
+          </div>
+          <div class="button-row">
+            <button class="btn" id="addRule">Add rule</button>
+          </div>
+          <p class="hint" id="ruleHint">Tip: Prefix with <code>re:</code> for regex.</p>
+          <ul class="rule-list" id="ruleList"></ul>
+        </section>
+
+        <section class="card collapsed" id="profilesCard" data-collapsible>
+          <div class="card__title" role="button" tabindex="0" aria-expanded="false">
+            <span>Manage Proxies</span>
+            <span class="chip muted" id="profileCount">0</span>
+          </div>
+          <ul class="rule-list" id="profileList"></ul>
+          <div class="form-row split">
+            <div class="field">
+              <label for="profileName">Name</label>
+              <input id="profileName" type="text" placeholder="Office SOCKS" />
+            </div>
+            <div class="field">
+              <label for="profileScheme">Scheme</label>
+              <select id="profileScheme" class="input-tight input-90">
+                <option value="http">HTTP</option>
+                <option value="https">HTTPS</option>
+                <option value="socks">SOCKS5</option>
+                <option value="socks4">SOCKS4</option>
+                <option value="socks5">SOCKS5 (alt)</option>
+                <option value="direct">Direct</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row split">
+            <div class="field">
+              <label for="profileHost">Host</label>
+              <input id="profileHost" type="text" placeholder="proxy.company.net" />
+            </div>
+            <div class="field">
+              <label for="profilePort">Port</label>
+              <input id="profilePort" class="input-tight input-90" type="number" min="1" max="65535" placeholder="1080" />
+            </div>
+          </div>
+          <div class="form-row split equal">
+            <div class="field">
+              <label for="profileUsername">Username</label>
+              <input id="profileUsername" class="input-compact" type="text" placeholder="optional" />
+            </div>
+            <div class="field">
+              <label for="profilePassword">Password</label>
+              <input id="profilePassword" class="input-compact" type="password" placeholder="optional" />
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="btn" id="saveProfile">Save profile</button>
+            <button class="btn ghost" id="cancelProfileEdit">Cancel</button>
+          </div>
+          <p class="hint" id="profileHint"></p>
+        </section>
+      </div>
+
+      <div class="tab-panel" id="tabOptionsPanel" hidden>
+        <section class="card collapsed" id="manageDataCard" data-collapsible>
+          <div class="card__title" role="button" tabindex="0" aria-expanded="false">
+            <span>Export/Import</span>
+            <span class="chip muted">Bulk</span>
+          </div>
+          <div class="form-row">
+            <label for="popupImportMode">Import mode</label>
+            <select id="popupImportMode">
+              <option value="merge">Merge into existing</option>
+              <option value="replace">Replace existing data</option>
+            </select>
+          </div>
+          <div class="button-row">
+            <button class="btn" type="button" id="popupExportData">Export JSON</button>
+            <button class="btn ghost" type="button" id="popupImportData">Import JSON</button>
+            <input id="popupImportFile" type="file" accept="application/json" hidden />
+          </div>
+          <p class="hint hint--neutral" id="popupImportHint"></p>
+        </section>
+      </div>
+    </main>
+
+    <script src="../storage.js"></script>
+    <script src="../matcher.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

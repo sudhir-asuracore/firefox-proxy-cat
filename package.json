@@ -1,0 +1,15 @@
+{
+  "name": "proxy-cat",
+  "version": "0.1.0",
+  "description": "Assign proxies per site, tab, or tab group.",
+  "private": true,
+  "scripts": {
+    "build": "web-ext build -s . -a dist --overwrite-dest",
+    "lint": "web-ext lint -s .",
+    "test": "npm run lint",
+    "start": "web-ext run -s ."
+  },
+  "devDependencies": {
+    "web-ext": "^8.0.0"
+  }
+}
