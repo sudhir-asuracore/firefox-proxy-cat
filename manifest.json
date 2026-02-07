@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Proxy Cat",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Assign proxies per site, tab, or tab group.",
   "author": "Sudhir Babu Nakka",
   "homepage_url": "https://github.com/sudhir-asuracore/firefox-proxy-cat",
