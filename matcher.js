@@ -93,7 +93,7 @@
     return null;
   };
 
-  const evaluateProxy = ({ state, tabId, groupId, url }) => {
+  const evaluateProxy = ({ state, tabId, url }) => {
     if (!state) {
       return { type: "direct" };
     }
@@ -102,12 +102,6 @@
     const resolvedTab = resolveOverride(tabOverride);
     if (resolvedTab) {
       return resolvedTab;
-    }
-
-    const groupOverride = state.groupOverrides[String(groupId)];
-    const resolvedGroup = resolveOverride(groupOverride);
-    if (resolvedGroup) {
-      return resolvedGroup;
     }
 
     const rule = findMatchingRule(state.rules, url);

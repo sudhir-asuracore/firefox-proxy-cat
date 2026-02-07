@@ -114,7 +114,6 @@
     const decision = ProxyCatMatcher.evaluateProxy({
       state,
       tabId: tab.id,
-      groupId: tab.groupId,
       url: tab.url
     });
 
@@ -133,21 +132,10 @@
   const handleProxyRequest = async (details) => {
     const state = await getState();
     const tabId = details.tabId;
-    let groupId = null;
-
-    if (tabId >= 0) {
-      try {
-        const tab = await api.tabs.get(tabId);
-        groupId = tab.groupId;
-      } catch (error) {
-        groupId = null;
-      }
-    }
 
     const decision = ProxyCatMatcher.evaluateProxy({
       state,
       tabId,
-      groupId,
       url: details.url
     });
 
@@ -214,11 +202,8 @@
 
   const MENU_IDS = {
     tabRoot: "proxycat-tab-root",
-    groupRoot: "proxycat-group-root",
     tabDisable: "proxycat-tab-disable",
-    tabClear: "proxycat-tab-clear",
-    groupDisable: "proxycat-group-disable",
-    groupClear: "proxycat-group-clear"
+    tabClear: "proxycat-tab-clear"
   };
 
   const rebuildMenus = async () => {
@@ -233,12 +218,6 @@
       contexts: ["tab"]
     });
 
-    api.contextMenus.create({
-      id: MENU_IDS.groupRoot,
-      title: "Proxy Cat: Assign to tab group",
-      contexts: ["tab"]
-    });
-
     Object.values(profiles).forEach((profile) => {
       if (profile.id === "direct") {
         return;
@@ -247,13 +226,6 @@
       api.contextMenus.create({
         id: `proxycat-tab-profile-${profile.id}`,
         parentId: MENU_IDS.tabRoot,
-        title: profile.name,
-        contexts: ["tab"]
-      });
-
-      api.contextMenus.create({
-        id: `proxycat-group-profile-${profile.id}`,
-        parentId: MENU_IDS.groupRoot,
         title: profile.name,
         contexts: ["tab"]
       });
@@ -272,20 +244,6 @@
       title: "Clear tab override",
       contexts: ["tab"]
     });
-
-    api.contextMenus.create({
-      id: MENU_IDS.groupDisable,
-      parentId: MENU_IDS.groupRoot,
-      title: "Disable proxy",
-      contexts: ["tab"]
-    });
-
-    api.contextMenus.create({
-      id: MENU_IDS.groupClear,
-      parentId: MENU_IDS.groupRoot,
-      title: "Clear group override",
-      contexts: ["tab"]
-    });
   };
 
   api.contextMenus.onClicked.addListener(async (info, tab) => {
@@ -294,7 +252,6 @@
     }
 
     const tabId = tab.id;
-    const groupId = tab.groupId;
 
     if (info.menuItemId === MENU_IDS.tabDisable) {
       await ProxyCatStorage.setTabOverride(tabId, { type: "disabled" });
@@ -306,34 +263,10 @@
       return;
     }
 
-    if (info.menuItemId === MENU_IDS.groupDisable) {
-      if (groupId === undefined || groupId === -1) {
-        return;
-      }
-      await ProxyCatStorage.setGroupOverride(groupId, { type: "disabled" });
-      return;
-    }
-
-    if (info.menuItemId === MENU_IDS.groupClear) {
-      if (groupId === undefined || groupId === -1) {
-        return;
-      }
-      await ProxyCatStorage.clearGroupOverride(groupId);
-      return;
-    }
-
     if (info.menuItemId.startsWith("proxycat-tab-profile-")) {
       const profileId = info.menuItemId.replace("proxycat-tab-profile-", "");
       await ProxyCatStorage.setTabOverride(tabId, { type: "profile", profileId });
       return;
-    }
-
-    if (info.menuItemId.startsWith("proxycat-group-profile-")) {
-      if (groupId === undefined || groupId === -1) {
-        return;
-      }
-      const profileId = info.menuItemId.replace("proxycat-group-profile-", "");
-      await ProxyCatStorage.setGroupOverride(groupId, { type: "profile", profileId });
     }
   });
 

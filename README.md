@@ -1,3 +1,6 @@
+[![CI](https://github.com/sudhir-asuracore/firefox-proxy-cat/actions/workflows/ci.yml/badge.svg)](https://github.com/sudhir-asuracore/firefox-proxy-cat/actions/workflows/ci.yml)
+[![Release](https://github.com/sudhir-asuracore/firefox-proxy-cat/actions/workflows/release.yml/badge.svg)](https://github.com/sudhir-asuracore/firefox-proxy-cat/actions/workflows/release.yml)
+
 # Proxy Cat
 
 Proxy Cat is a Firefox extension for routing traffic with intent. Create proxy

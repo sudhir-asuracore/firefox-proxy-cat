@@ -239,7 +239,6 @@
     const decision = ProxyCatMatcher.evaluateProxy({
       state,
       tabId: currentTab.id,
-      groupId: currentTab.groupId,
       url: currentTab.url
     });
 
