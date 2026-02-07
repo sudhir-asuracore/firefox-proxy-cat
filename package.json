@@ -1,6 +1,6 @@
 {
   "name": "proxy-cat",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Assign proxies per site, tab, or tab group.",
   "private": true,
   "scripts": {
