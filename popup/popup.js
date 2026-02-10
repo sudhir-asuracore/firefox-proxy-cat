@@ -35,9 +35,12 @@
     tabOptionsButton: document.getElementById("tabOptionsButton"),
     tabMainPanel: document.getElementById("tabMainPanel"),
     tabOptionsPanel: document.getElementById("tabOptionsPanel"),
+    footerVersion: document.getElementById("footerVersion"),
     popupExportData: document.getElementById("popupExportData"),
     popupImportData: document.getElementById("popupImportData"),
     popupImportFile: document.getElementById("popupImportFile"),
+    popupImportUrl: document.getElementById("popupImportUrl"),
+    popupImportFromUrl: document.getElementById("popupImportFromUrl"),
     popupImportMode: document.getElementById("popupImportMode"),
     popupImportHint: document.getElementById("popupImportHint")
   };
@@ -482,22 +485,7 @@
     setPopupImportHint("Exported profiles and rules.");
   };
 
-  const importData = async (file) => {
-    const text = await file.text();
-    let payload = null;
-
-    try {
-      payload = JSON.parse(text);
-    } catch (error) {
-      setPopupImportHint("Import failed: invalid JSON file.", true);
-      return;
-    }
-
-    if (!payload || typeof payload !== "object") {
-      setPopupImportHint("Import failed: unsupported file format.", true);
-      return;
-    }
-
+  const importPayload = async (payload) => {
     const rawProfiles = Array.isArray(payload.profiles) ? payload.profiles : [];
     const rawRules = Array.isArray(payload.rules) ? payload.rules : [];
     const mode = elements.popupImportMode.value;
@@ -531,6 +519,66 @@
     } else {
       setPopupImportHint(importMessage);
     }
+  };
+
+  const importText = async (text) => {
+    let payload = null;
+
+    try {
+      payload = JSON.parse(text);
+    } catch (error) {
+      setPopupImportHint("Import failed: invalid JSON.", true);
+      return;
+    }
+
+    if (!payload || typeof payload !== "object") {
+      setPopupImportHint("Import failed: unsupported file format.", true);
+      return;
+    }
+
+    await importPayload(payload);
+  };
+
+  const importData = async (file) => {
+    const text = await file.text();
+    await importText(text);
+  };
+
+  const importFromUrl = async () => {
+    const rawUrl = elements.popupImportUrl.value.trim();
+    if (!rawUrl) {
+      setPopupImportHint("Import failed: enter a URL.", true);
+      return;
+    }
+
+    let parsedUrl = null;
+    try {
+      parsedUrl = new URL(rawUrl);
+    } catch (error) {
+      setPopupImportHint("Import failed: invalid URL.", true);
+      return;
+    }
+
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      setPopupImportHint("Import failed: URL must be http or https.", true);
+      return;
+    }
+
+    let response = null;
+    try {
+      response = await fetch(parsedUrl.toString(), { credentials: "omit" });
+    } catch (error) {
+      setPopupImportHint("Import failed: could not fetch URL.", true);
+      return;
+    }
+
+    if (!response.ok) {
+      setPopupImportHint(`Import failed: ${response.status} ${response.statusText}.`, true);
+      return;
+    }
+
+    const text = await response.text();
+    await importText(text);
   };
 
   elements.applyTab.addEventListener("click", async () => {
@@ -696,6 +744,13 @@
     elements.popupImportFile.click();
   });
 
+  elements.popupImportFromUrl.addEventListener("click", () => {
+    setPopupImportHint("");
+    importFromUrl().catch(() => {
+      setPopupImportHint("Import failed.", true);
+    });
+  });
+
   elements.popupImportFile.addEventListener("change", async (event) => {
     const file = event.target.files && event.target.files[0];
     elements.popupImportFile.value = "";
@@ -716,4 +771,9 @@
   });
   setupCollapsibles();
   setActiveTab("main");
+
+  if (elements.footerVersion && api.runtime && api.runtime.getManifest) {
+    const manifest = api.runtime.getManifest();
+    elements.footerVersion.textContent = `v${manifest.version}`;
+  }
 })();

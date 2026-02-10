@@ -27,6 +27,8 @@
     exportData: document.getElementById("exportData"),
     importData: document.getElementById("importData"),
     importFile: document.getElementById("importFile"),
+    importUrl: document.getElementById("importUrl"),
+    importFromUrl: document.getElementById("importFromUrl"),
     importMode: document.getElementById("importMode"),
     importHint: document.getElementById("importHint")
   };
@@ -373,22 +375,7 @@
     setImportHint("Exported profiles and rules.");
   };
 
-  const importData = async (file) => {
-    const text = await file.text();
-    let payload = null;
-
-    try {
-      payload = JSON.parse(text);
-    } catch (error) {
-      setImportHint("Import failed: invalid JSON file.", true);
-      return;
-    }
-
-    if (!payload || typeof payload !== "object") {
-      setImportHint("Import failed: unsupported file format.", true);
-      return;
-    }
-
+  const importPayload = async (payload) => {
     const rawProfiles = Array.isArray(payload.profiles) ? payload.profiles : [];
     const rawRules = Array.isArray(payload.rules) ? payload.rules : [];
     const mode = elements.importMode.value;
@@ -422,6 +409,66 @@
     } else {
       setImportHint(importMessage);
     }
+  };
+
+  const importText = async (text) => {
+    let payload = null;
+
+    try {
+      payload = JSON.parse(text);
+    } catch (error) {
+      setImportHint("Import failed: invalid JSON.", true);
+      return;
+    }
+
+    if (!payload || typeof payload !== "object") {
+      setImportHint("Import failed: unsupported file format.", true);
+      return;
+    }
+
+    await importPayload(payload);
+  };
+
+  const importData = async (file) => {
+    const text = await file.text();
+    await importText(text);
+  };
+
+  const importFromUrl = async () => {
+    const rawUrl = elements.importUrl.value.trim();
+    if (!rawUrl) {
+      setImportHint("Import failed: enter a URL.", true);
+      return;
+    }
+
+    let parsedUrl = null;
+    try {
+      parsedUrl = new URL(rawUrl);
+    } catch (error) {
+      setImportHint("Import failed: invalid URL.", true);
+      return;
+    }
+
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      setImportHint("Import failed: URL must be http or https.", true);
+      return;
+    }
+
+    let response = null;
+    try {
+      response = await fetch(parsedUrl.toString(), { credentials: "omit" });
+    } catch (error) {
+      setImportHint("Import failed: could not fetch URL.", true);
+      return;
+    }
+
+    if (!response.ok) {
+      setImportHint(`Import failed: ${response.status} ${response.statusText}.`, true);
+      return;
+    }
+
+    const text = await response.text();
+    await importText(text);
   };
 
   elements.profileScheme.addEventListener("change", updateProfileFields);
@@ -553,6 +600,13 @@
   elements.importData.addEventListener("click", () => {
     clearHints();
     elements.importFile.click();
+  });
+
+  elements.importFromUrl.addEventListener("click", () => {
+    clearHints();
+    importFromUrl().catch(() => {
+      setImportHint("Import failed.", true);
+    });
   });
 
   elements.importFile.addEventListener("change", async (event) => {

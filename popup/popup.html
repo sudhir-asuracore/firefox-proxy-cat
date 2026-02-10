@@ -129,9 +129,46 @@
             <button class="btn ghost" type="button" id="popupImportData">Import JSON</button>
             <input id="popupImportFile" type="file" accept="application/json" hidden />
           </div>
+          <div class="form-row">
+            <label for="popupImportUrl">Import from URL</label>
+            <input
+              id="popupImportUrl"
+              type="url"
+              placeholder="https://example.com/proxycat-backup.json"
+            />
+          </div>
+          <div class="button-row">
+            <button class="btn ghost" type="button" id="popupImportFromUrl">Import URL</button>
+          </div>
           <p class="hint hint--neutral" id="popupImportHint"></p>
         </section>
       </div>
+
+      <footer class="popup__footer">
+        <div class="footer__left">
+          <a href="https://ko-fi.com/U7U61FUIAB" target="_blank" rel="noreferrer">
+            <img
+              height="36"
+              style="border: 0px; height: 36px;"
+              src="../icons/kofi_beige.png"
+              border="0"
+              alt="Buy Me a Coffee at ko-fi.com"
+            />
+          </a>
+        </div>
+        <div class="footer__right">
+          <span class="footer__version" id="footerVersion">v0.0.0</span>
+<!--          <span class="footer__sep">|</span>-->
+          <a
+            class="footer__link"
+            href="https://github.com/sudhir-asuracore/firefox-proxy-cat"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Source / Report issue
+          </a>
+        </div>
+      </footer>
     </main>
 
     <script src="../storage.js"></script>

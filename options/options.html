@@ -118,6 +118,17 @@
             <button class="btn ghost" type="button" id="importData">Import JSON</button>
             <input id="importFile" type="file" accept="application/json" hidden />
           </div>
+          <div class="field">
+            <label for="importUrl">Import from URL</label>
+            <input
+              id="importUrl"
+              type="url"
+              placeholder="https://example.com/proxycat-backup.json"
+            />
+          </div>
+          <div class="button-row">
+            <button class="btn ghost" type="button" id="importFromUrl">Import URL</button>
+          </div>
           <p class="hint hint--neutral" id="importHint"></p>
         </div>
       </section>
