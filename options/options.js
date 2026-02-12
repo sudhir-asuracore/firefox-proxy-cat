@@ -15,6 +15,9 @@
     saveProfile: document.getElementById("saveProfile"),
     cancelEdit: document.getElementById("cancelEdit"),
     profileHint: document.getElementById("profileHint"),
+    deleteAllProfiles: document.getElementById("deleteAllProfiles"),
+    deleteAllRules: document.getElementById("deleteAllRules"),
+    bulkHint: document.getElementById("bulkHint"),
     ruleList: document.getElementById("ruleList"),
     ruleCount: document.getElementById("ruleCount"),
     ruleForm: document.getElementById("ruleForm"),
@@ -30,7 +33,8 @@
     importUrl: document.getElementById("importUrl"),
     importFromUrl: document.getElementById("importFromUrl"),
     importMode: document.getElementById("importMode"),
-    importHint: document.getElementById("importHint")
+    importHint: document.getElementById("importHint"),
+    importSpinner: document.getElementById("importSpinner")
   };
 
   let editProfileId = null;
@@ -41,6 +45,8 @@
     elements.ruleHint.textContent = "";
     elements.importHint.textContent = "";
     elements.importHint.style.color = "";
+    elements.bulkHint.textContent = "";
+    elements.bulkHint.style.color = "";
   };
 
   const setProfileHint = (message) => {
@@ -54,6 +60,22 @@
   const setImportHint = (message, isError) => {
     elements.importHint.textContent = message || "";
     elements.importHint.style.color = isError ? "#b6451f" : "";
+  };
+
+  const setBulkHint = (message, isError) => {
+    elements.bulkHint.textContent = message || "";
+    elements.bulkHint.style.color = isError ? "#b6451f" : "";
+  };
+
+  const setBusy = (isBusy) => {
+    elements.exportData.disabled = isBusy;
+    elements.importData.disabled = isBusy;
+    elements.importFromUrl.disabled = isBusy;
+    if (isBusy) {
+      elements.importSpinner.classList.add("active");
+    } else {
+      elements.importSpinner.classList.remove("active");
+    }
   };
 
   const updateProfileFields = () => {
@@ -226,6 +248,8 @@
     renderProfiles(state);
     renderRules(state);
     fillRuleProfiles(profiles);
+    elements.deleteAllProfiles.disabled = Object.keys(state.profiles).length === 0;
+    elements.deleteAllRules.disabled = state.rules.length === 0;
   };
 
   const createId = (prefix, existing) => {
@@ -269,6 +293,34 @@
         return;
       }
 
+      const normalized = {
+        name: candidate.name.trim(),
+        scheme: candidate.scheme || "http",
+        host: (candidate.host || "").trim(),
+        port: Number(candidate.port || 0),
+        username: (candidate.username || "").trim(),
+        password: (candidate.password || "").trim()
+      };
+
+      const existingId = Object.keys(profiles).find((id) => {
+        const p = profiles[id];
+        return (
+          p.name === normalized.name &&
+          p.scheme === normalized.scheme &&
+          p.host === normalized.host &&
+          p.port === normalized.port &&
+          p.username === normalized.username &&
+          p.password === normalized.password
+        );
+      });
+
+      if (existingId) {
+        if (originalId) {
+          idMap[originalId] = existingId;
+        }
+        return;
+      }
+
       let nextId = candidate.id;
       if (!nextId || profiles[nextId]) {
         nextId = createId("p", profiles);
@@ -279,13 +331,8 @@
       }
 
       profiles[nextId] = {
-        ...candidate,
-        id: nextId,
-        name: candidate.name.trim(),
-        host: (candidate.host || "").trim(),
-        port: Number(candidate.port || 0),
-        username: (candidate.username || "").trim(),
-        password: (candidate.password || "").trim()
+        ...normalized,
+        id: nextId
       };
       importedCount += 1;
     });
@@ -329,6 +376,15 @@
         return;
       }
 
+      const normalizedPattern = candidate.pattern.trim();
+      const isDuplicate = rules.some(
+        (r) => r.pattern.trim() === normalizedPattern && r.profileId === candidate.profileId
+      );
+
+      if (isDuplicate) {
+        return;
+      }
+
       let nextId = candidate.id;
       if (!nextId || ruleIds.has(nextId)) {
         nextId = createId("r", ruleIds);
@@ -338,7 +394,7 @@
       rules.push({
         ...candidate,
         id: nextId,
-        pattern: candidate.pattern.trim(),
+        pattern: normalizedPattern,
         enabled: candidate.enabled !== false
       });
       importedCount += 1;
@@ -503,6 +559,65 @@
     resetProfileForm();
   });
 
+  elements.deleteAllProfiles.addEventListener("click", async () => {
+    clearHints();
+    const state = await ProxyCatStorage.getState();
+    const profileIds = Object.keys(state.profiles);
+    if (!profileIds.length) {
+      setBulkHint("No profiles to delete.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${profileIds.length} profile${profileIds.length === 1 ? "" : "s"}? This also removes matching rules.`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      for (const id of profileIds) {
+        await ProxyCatStorage.deleteProfile(id);
+      }
+      resetProfileForm();
+      await refresh();
+      setBulkHint(`Deleted ${profileIds.length} profile${profileIds.length === 1 ? "" : "s"}.`);
+    } catch (error) {
+      setBulkHint("Could not delete profiles.", true);
+    }
+  });
+
+  elements.deleteAllRules.addEventListener("click", async () => {
+    clearHints();
+    const state = await ProxyCatStorage.getState();
+    const ruleCount = state.rules.length;
+    if (!ruleCount) {
+      setBulkHint("No rules to delete.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${ruleCount} rule${ruleCount === 1 ? "" : "s"}?`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const ruleIds = state.rules.map((rule) => rule.id);
+      for (const id of ruleIds) {
+        await ProxyCatStorage.deleteRule(id);
+      }
+      if (editRuleId) {
+        resetRuleForm();
+      }
+      await refresh();
+      setBulkHint(`Deleted ${ruleCount} rule${ruleCount === 1 ? "" : "s"}.`);
+    } catch (error) {
+      setBulkHint("Could not delete rules.", true);
+    }
+  });
+
   elements.cancelRuleEdit.addEventListener("click", () => {
     resetRuleForm();
   });
@@ -590,23 +705,36 @@
     }
   });
 
-  elements.exportData.addEventListener("click", () => {
+  elements.exportData.addEventListener("click", async () => {
     clearHints();
-    exportData().catch(() => {
+    setBusy(true);
+    try {
+      await exportData();
+    } catch (error) {
       setImportHint("Export failed.", true);
-    });
+    } finally {
+      setBusy(false);
+    }
   });
 
   elements.importData.addEventListener("click", () => {
+    if (elements.importData.disabled) {
+      return;
+    }
     clearHints();
     elements.importFile.click();
   });
 
-  elements.importFromUrl.addEventListener("click", () => {
+  elements.importFromUrl.addEventListener("click", async () => {
     clearHints();
-    importFromUrl().catch(() => {
+    setBusy(true);
+    try {
+      await importFromUrl();
+    } catch (error) {
       setImportHint("Import failed.", true);
-    });
+    } finally {
+      setBusy(false);
+    }
   });
 
   elements.importFile.addEventListener("change", async (event) => {
@@ -617,10 +745,13 @@
     }
 
     clearHints();
+    setBusy(true);
     try {
       await importData(file);
     } catch (error) {
       setImportHint("Import failed.", true);
+    } finally {
+      setBusy(false);
     }
   });
 

@@ -158,6 +158,16 @@ body {
   box-shadow: none;
 }
 
+.btn.danger {
+  background: #d64b4b;
+  color: #fff;
+}
+
+.btn.ghost.danger {
+  color: #b6451f;
+  border-color: rgba(182, 69, 31, 0.3);
+}
+
 .form {
   display: grid;
   gap: 12px;
@@ -204,6 +214,35 @@ select:focus {
 
 .hint--neutral {
   color: var(--muted);
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  vertical-align: middle;
+  margin-left: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.spinner.active {
+  opacity: 1;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .switch {

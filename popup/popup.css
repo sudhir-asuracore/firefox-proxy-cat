@@ -273,6 +273,16 @@ select:focus {
   box-shadow: none;
 }
 
+.btn.danger {
+  background: #d64b4b;
+  color: #fff;
+}
+
+.btn.ghost.danger {
+  color: #b6451f;
+  border-color: rgba(182, 69, 31, 0.3);
+}
+
 .chip {
   padding: 4px 8px;
   border-radius: 999px;

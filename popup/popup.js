@@ -42,7 +42,10 @@
     popupImportUrl: document.getElementById("popupImportUrl"),
     popupImportFromUrl: document.getElementById("popupImportFromUrl"),
     popupImportMode: document.getElementById("popupImportMode"),
-    popupImportHint: document.getElementById("popupImportHint")
+    popupImportHint: document.getElementById("popupImportHint"),
+    popupDeleteAllProfiles: document.getElementById("popupDeleteAllProfiles"),
+    popupDeleteAllRules: document.getElementById("popupDeleteAllRules"),
+    popupBulkHint: document.getElementById("popupBulkHint")
   };
 
   let currentTab = null;
@@ -251,6 +254,8 @@
     renderRules(state, profiles);
     renderProfiles(state);
     updateProfileFields();
+    elements.popupDeleteAllProfiles.disabled = Object.keys(state.profiles).length === 0;
+    elements.popupDeleteAllRules.disabled = state.rules.length === 0;
   };
 
   const updateCollapsibleState = (card, isExpanded) => {
@@ -329,6 +334,11 @@
     elements.popupImportHint.style.color = isError ? "#b6451f" : "";
   };
 
+  const setPopupBulkHint = (message, isError) => {
+    elements.popupBulkHint.textContent = message || "";
+    elements.popupBulkHint.style.color = isError ? "#b6451f" : "";
+  };
+
   const setActiveTab = (tab) => {
     const showOptions = tab === "options";
     console.log(tab, showOptions);
@@ -379,6 +389,34 @@
         return;
       }
 
+      const normalized = {
+        name: candidate.name.trim(),
+        scheme: candidate.scheme || "http",
+        host: (candidate.host || "").trim(),
+        port: Number(candidate.port || 0),
+        username: (candidate.username || "").trim(),
+        password: (candidate.password || "").trim()
+      };
+
+      const existingId = Object.keys(profiles).find((id) => {
+        const p = profiles[id];
+        return (
+          p.name === normalized.name &&
+          p.scheme === normalized.scheme &&
+          p.host === normalized.host &&
+          p.port === normalized.port &&
+          p.username === normalized.username &&
+          p.password === normalized.password
+        );
+      });
+
+      if (existingId) {
+        if (originalId) {
+          idMap[originalId] = existingId;
+        }
+        return;
+      }
+
       let nextId = candidate.id;
       if (!nextId || profiles[nextId]) {
         nextId = createId("p", profiles);
@@ -389,13 +427,8 @@
       }
 
       profiles[nextId] = {
-        ...candidate,
-        id: nextId,
-        name: candidate.name.trim(),
-        host: (candidate.host || "").trim(),
-        port: Number(candidate.port || 0),
-        username: (candidate.username || "").trim(),
-        password: (candidate.password || "").trim()
+        ...normalized,
+        id: nextId
       };
       importedCount += 1;
     });
@@ -749,6 +782,64 @@
     importFromUrl().catch(() => {
       setPopupImportHint("Import failed.", true);
     });
+  });
+
+  elements.popupDeleteAllProfiles.addEventListener("click", async () => {
+    setPopupBulkHint("");
+    const state = await ProxyCatStorage.getState();
+    const profileIds = Object.keys(state.profiles);
+    if (!profileIds.length) {
+      setPopupBulkHint("No profiles to delete.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${profileIds.length} profile${profileIds.length === 1 ? "" : "s"}? This also removes matching rules.`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      for (const id of profileIds) {
+        await ProxyCatStorage.deleteProfile(id);
+      }
+      resetProfileForm();
+      resetRuleForm();
+      await refresh();
+      setPopupBulkHint(`Deleted ${profileIds.length} profile${profileIds.length === 1 ? "" : "s"}.`);
+    } catch (error) {
+      setPopupBulkHint("Could not delete profiles.", true);
+    }
+  });
+
+  elements.popupDeleteAllRules.addEventListener("click", async () => {
+    setPopupBulkHint("");
+    const state = await ProxyCatStorage.getState();
+    const ruleCount = state.rules.length;
+    if (!ruleCount) {
+      setPopupBulkHint("No rules to delete.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${ruleCount} rule${ruleCount === 1 ? "" : "s"}?`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const ruleIds = state.rules.map((rule) => rule.id);
+      for (const id of ruleIds) {
+        await ProxyCatStorage.deleteRule(id);
+      }
+      resetRuleForm();
+      await refresh();
+      setPopupBulkHint(`Deleted ${ruleCount} rule${ruleCount === 1 ? "" : "s"}.`);
+    } catch (error) {
+      setPopupBulkHint("Could not delete rules.", true);
+    }
   });
 
   elements.popupImportFile.addEventListener("change", async (event) => {

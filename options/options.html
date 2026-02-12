@@ -116,6 +116,7 @@
           <div class="button-row">
             <button class="btn" type="button" id="exportData">Export JSON</button>
             <button class="btn ghost" type="button" id="importData">Import JSON</button>
+            <span id="importSpinner" class="spinner"></span>
             <input id="importFile" type="file" accept="application/json" hidden />
           </div>
           <div class="field">
@@ -130,6 +131,22 @@
             <button class="btn ghost" type="button" id="importFromUrl">Import URL</button>
           </div>
           <p class="hint hint--neutral" id="importHint"></p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <h2>Delete Operations</h2>
+            <p>Remove all profiles or rules at once.</p>
+          </div>
+        </div>
+        <div class="form">
+          <div class="button-row">
+            <button class="btn danger" type="button" id="deleteAllProfiles">Delete all profiles</button>
+            <button class="btn danger" type="button" id="deleteAllRules">Delete all rules</button>
+          </div>
+          <p class="hint" id="bulkHint"></p>
         </div>
       </section>
     </main>
