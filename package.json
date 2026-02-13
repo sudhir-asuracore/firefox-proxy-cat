@@ -4,12 +4,14 @@
   "description": "Assign proxies per site, tab, or tab group.",
   "private": true,
   "scripts": {
+    "start:firefox": "web-ext run --source-dir ./extension-dist/",
+    "start:android": "web-ext run --target=firefox-android",
     "build": "web-ext build -s . -a dist --overwrite-dest",
     "lint": "web-ext lint -s .",
     "test": "npm run lint",
     "start": "web-ext run -s ."
   },
   "devDependencies": {
-    "web-ext": "^8.0.0"
+    "web-ext": "^8.10.0"
   }
 }

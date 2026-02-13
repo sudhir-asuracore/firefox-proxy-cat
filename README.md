@@ -1,5 +1,6 @@
 [![CI](https://github.com/sudhir-asuracore/firefox-proxy-cat/actions/workflows/ci.yml/badge.svg)](https://github.com/sudhir-asuracore/firefox-proxy-cat/actions/workflows/ci.yml)
 [![Release](https://github.com/sudhir-asuracore/firefox-proxy-cat/actions/workflows/release.yml/badge.svg)](https://github.com/sudhir-asuracore/firefox-proxy-cat/actions/workflows/release.yml)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/U7U61FUIAB)
 
 # Proxy Cat
 
