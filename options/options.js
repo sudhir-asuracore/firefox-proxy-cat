@@ -32,6 +32,7 @@
     importFile: document.getElementById("importFile"),
     importUrl: document.getElementById("importUrl"),
     importFromUrl: document.getElementById("importFromUrl"),
+    freeProxies: document.getElementById("freeProxies"),
     importMode: document.getElementById("importMode"),
     importHint: document.getElementById("importHint"),
     importSpinner: document.getElementById("importSpinner")
@@ -71,6 +72,7 @@
     elements.exportData.disabled = isBusy;
     elements.importData.disabled = isBusy;
     elements.importFromUrl.disabled = isBusy;
+    elements.freeProxies.disabled = isBusy;
     if (isBusy) {
       elements.importSpinner.classList.add("active");
     } else {
@@ -735,6 +737,11 @@
     } finally {
       setBusy(false);
     }
+  });
+
+  elements.freeProxies.addEventListener("click", () => {
+    elements.importUrl.value =
+      "https://gist.githubusercontent.com/sudhir-asuracore/456e54f3a9c290e4f24a524ed618153d/raw/158b4d741fdc8a566aada602f8c6d0dffcef82ae/proxies.json";
   });
 
   elements.importFile.addEventListener("change", async (event) => {

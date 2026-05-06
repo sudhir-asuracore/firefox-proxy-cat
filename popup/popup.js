@@ -41,6 +41,7 @@
     popupImportFile: document.getElementById("popupImportFile"),
     popupImportUrl: document.getElementById("popupImportUrl"),
     popupImportFromUrl: document.getElementById("popupImportFromUrl"),
+    popupFreeProxies: document.getElementById("popupFreeProxies"),
     popupImportMode: document.getElementById("popupImportMode"),
     popupImportHint: document.getElementById("popupImportHint"),
     popupDeleteAllProfiles: document.getElementById("popupDeleteAllProfiles"),
@@ -782,6 +783,10 @@
     importFromUrl().catch(() => {
       setPopupImportHint("Import failed.", true);
     });
+  });
+  
+  elements.popupFreeProxies.addEventListener("click", () => {
+    elements.popupImportUrl.value = "https://gist.githubusercontent.com/sudhir-asuracore/456e54f3a9c290e4f24a524ed618153d/raw/158b4d741fdc8a566aada602f8c6d0dffcef82ae/proxies.json";
   });
 
   elements.popupDeleteAllProfiles.addEventListener("click", async () => {
